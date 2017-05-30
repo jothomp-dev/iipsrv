@@ -27,6 +27,7 @@
 
 
 #include "KakaduImage.h"
+#include "Environment.h"
 #include <kdu_compressed.h>
 #include <cmath>
 #include <sstream>
@@ -61,6 +62,8 @@ using namespace std;
 void KakaduImage::openImage() throw (file_error)
 {
   string filename = getFileName( currentX, currentY );
+  std::string error_mode = Environment::getErrorMode();
+  bool seeking_enabled = error_mode != "resilient";
 
   // Update our timestamp
   updateTimestamp( filename );
@@ -69,6 +72,7 @@ void KakaduImage::openImage() throw (file_error)
   kdu_customize_warnings(&pretty_cout);
   kdu_customize_errors(&pretty_cerr);
 
+
 #ifdef DEBUG
   Timer timer;
   timer.start();
@@ -76,7 +80,7 @@ void KakaduImage::openImage() throw (file_error)
 
   // Open the JPX or JP2 file
   try{
-    src.open( filename.c_str(), true );
+    src.open( filename.c_str(), seeking_enabled );
     if( jpx_input.open( &src, false ) != 1 ) throw 1;
   }
   catch (...){
@@ -104,7 +108,13 @@ void KakaduImage::openImage() throw (file_error)
 
   // Set up the cache size and allow restarting
   //codestream.augment_cache_threshold(1024);
-  codestream.set_fast();
+  if ( error_mode == "fussy" ) {
+      codestream.set_fussy();
+  } else if ( error_mode == "resilient" ) {
+      codestream.set_resilient();
+  } else {
+      codestream.set_fast();
+  }
   codestream.set_persistent();
   //  codestream.enable_restart();
 
