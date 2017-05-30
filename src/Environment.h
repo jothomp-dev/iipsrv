@@ -42,6 +42,7 @@
 #define BASE_URL "";
 #define CACHE_CONTROL "max-age=86400"; // 24 hours
 #define ALLOW_UPSCALING true
+#define ERROR_MODE "fast"
 
 
 #include <string>
@@ -62,6 +63,18 @@ class Environment {
       if( loglevel < 0 ) loglevel = 0;
     }
     return loglevel;
+  }
+
+
+  static std::string getErrorMode(){
+    char* envpara = getenv( "ERROR_MODE" );
+    if ( envpara ) {
+      std::string mode(envpara);
+      if ( mode == "fussy" || mode == "resilient" ) {
+        return mode;
+      }
+    }
+    return std::string( ERROR_MODE );
   }
 
 

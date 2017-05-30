@@ -276,12 +276,15 @@ int main( int argc, char *argv[] )
   // Get the allow upscaling setting
   bool allow_upscaling = Environment::getAllowUpscaling();
 
+  string error_mode = Environment::getErrorMode();
+
 
   // Print out some information
   if( loglevel >= 1 ){
     logfile << "Setting maximum image cache size to " << max_image_cache_size << "MB" << endl;
     logfile << "Setting filesystem prefix to '" << filesystem_prefix << "'" << endl;
     logfile << "Setting default JPEG quality to " << jpeg_quality << endl;
+    logfile << "Setting error handling mode to " << error_mode << endl;
     logfile << "Setting maximum CVT size to " << max_CVT << endl;
     logfile << "Setting HTTP Cache-Control header to '" << cache_control << "'" << endl;
     logfile << "Setting 3D file sequence name pattern to '" << filename_pattern << "'" << endl;
