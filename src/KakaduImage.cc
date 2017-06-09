@@ -62,8 +62,8 @@ using namespace std;
 void KakaduImage::openImage() throw (file_error)
 {
   string filename = getFileName( currentX, currentY );
-  std::string error_mode = Environment::getErrorMode();
-  bool seeking_enabled = error_mode != "resilient";
+  std::string kdu_readmode = Environment::getKduReadMode();
+  bool seeking_enabled = kdu_readmode != "resilient";
 
   // Update our timestamp
   updateTimestamp( filename );
@@ -108,9 +108,9 @@ void KakaduImage::openImage() throw (file_error)
 
   // Set up the cache size and allow restarting
   //codestream.augment_cache_threshold(1024);
-  if ( error_mode == "fussy" ) {
+  if ( kdu_readmode == "fussy" ) {
       codestream.set_fussy();
-  } else if ( error_mode == "resilient" ) {
+  } else if ( kdu_readmode == "resilient" ) {
       codestream.set_resilient();
   } else {
       codestream.set_fast();
