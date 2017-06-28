@@ -525,7 +525,7 @@ int main( int argc, char *argv[] )
       session.out = &writer;
       session.watermark = &watermark;
       session.headers.clear();
-      session.kdu_readmode = kdu_readmode;
+      session.readmode = kdu_readmode;
 
       char* header = NULL;
       string request_string;

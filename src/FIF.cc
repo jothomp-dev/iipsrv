@@ -135,7 +135,7 @@ void FIF::run( Session* session, const string& src ){
           [](IIPImage *image, int& readmode) {
             image->setReadmode(readmode);
           }, // setter.function
-          session->kdu_readmode // setter.arg
+          session->readmode // setter.arg
         };
         setters.push_back(setter);
 #elif defined(HAVE_OPENJPEG)

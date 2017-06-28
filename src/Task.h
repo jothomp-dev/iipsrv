@@ -79,7 +79,7 @@ struct Session {
   std::ofstream* logfile;
   std::map <const std::string, std::string> headers;
   std::vector<PropertySetter> setters;
-  int kdu_readmode;
+  int readmode;
 
   imageCacheMapType *imageCache;
   Cache* tileCache;
