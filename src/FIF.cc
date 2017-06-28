@@ -20,8 +20,6 @@
 
 
 #include <algorithm>
-#include <functional>
-#include <vector>
 #include "Task.h"
 #include "URL.h"
 #include "Environment.h"
@@ -114,8 +112,6 @@ void FIF::run( Session* session, const string& src ){
       }
     }
 
-    typedef std::function<void(IIPImage*)> PropertySetter;
-    std::vector<PropertySetter> setters;
 
     /***************************************************************
       Test for different image types - only TIFF is native for now
@@ -134,10 +130,7 @@ void FIF::run( Session* session, const string& src ){
         *(session->logfile) << "FIF :: JPEG2000 image detected" << endl;
 #if defined(HAVE_KAKADU)
         *session->image = new KakaduImage( test );
-        PropertySetter setReadmode = [session](IIPImage *image) {
-            image->setReadmode(session->readmode);
-        };
-        setters.push_back(setReadmode);
+        (*session->image)->setReadmode(session->readmode);
 #elif defined(HAVE_OPENJPEG)
         *session->image = new OpenJPEGImage( test );
 #endif
@@ -179,9 +172,6 @@ void FIF::run( Session* session, const string& src ){
     }
     */
 
-    for (PropertySetter setProperty: setters) {
-      setProperty(*session->image);
-    }
 
     // Open image and update timestamp
     (*session->image)->openImage();
