@@ -1,7 +1,7 @@
 /*
     IIP FCGI server module - Main loop.
 
-    Copyright (C) 2000-2016 Ruven Pillay
+    Copyright (C) 2000-2017 Ruven Pillay
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 #include <string>
 #include <utility>
 #include <map>
+#include <algorithm>
 
 #include "TPTImage.h"
 #include "JPEGCompressor.h"
@@ -272,7 +273,13 @@ int main( int argc, char *argv[] )
 
   // Get requested HTTP Cache-Control setting
   string cache_control = Environment::getCacheControl();
-  
+
+
+  // Get URI mapping if we are not using query strings
+  string uri_map_string = Environment::getURIMap();
+  map<string,string> uri_map;
+
+
   // Get the allow upscaling setting
   bool allow_upscaling = Environment::getAllowUpscaling();
 
@@ -303,6 +310,41 @@ int main( int argc, char *argv[] )
     logfile << "Setting Allow Upscaling to " << (allow_upscaling? "true" : "false") << endl;
   }
 
+
+  // Setup our URI mapping for non-CGI requests
+  if( !uri_map_string.empty() ){
+
+    // Check map is well-formed: maps must be of the form "prefix=>protocol"
+    size_t pos;
+    if( (pos = uri_map_string.find("=>")) != string::npos ){
+
+      // Extract protocol
+      string prefix = uri_map_string.substr( 0, pos );
+      string protocol = uri_map_string.substr( pos+2 );
+      bool supported_protocol = false;
+
+      // Make sure the command is one of our supported protocols: "IIP", "IIIF", "Zoomify", "DeepZoom"
+      string prtcl = protocol;
+      transform( prtcl.begin(), prtcl.end(), prtcl.begin(), ::tolower );
+      if( prtcl == "iip" || prtcl == "iiif" || prtcl == "zoomify" || prtcl == "deepzoom" ){
+	supported_protocol = true;
+      }
+
+      if( loglevel > 0 ){
+	logfile << "Setting URI mapping to " << uri_map_string << ". "
+		<< ((supported_protocol)?"S":"Uns") << "upported protocol: " << protocol << endl;
+      }
+
+      // IIP protocol requires "FIF" as first argument
+      if( prtcl == "iip" ) prtcl = "fif";
+
+      // Initialize our map
+      if( supported_protocol ) uri_map[prefix] = prtcl;
+    }
+    else if( loglevel > 0 ) logfile << "Malformed URI map: " << uri_map_string << endl;
+
+  }
+  
 
   // Try to load our watermark
   if( watermark.getImage().length() > 0 ){
@@ -485,15 +527,47 @@ int main( int argc, char *argv[] )
       session.headers.clear();
 
       char* header = NULL;
+      string request_string;
 
-      // Get the query into a string
+
+      // If we have a URI prefix mapping, first test for a match between the map prefix string
+      //  and the full REQUEST_URI variable
+      if( !uri_map.empty() ){
+
+	string prefix = uri_map.begin()->first;
+	string command = uri_map.begin()->second;
+
+	header = FCGX_GetParam( "REQUEST_URI", request.envp );
+	const string request_uri = (header!=NULL) ? header : "";
+
+	// Try to find the prefix at the beginning of request URI
+	// Note that the first character will always be "/"
+	size_t len = prefix.length();
+	if( (len==0) || (request_uri.find(prefix)==1) ){
+	  // This is indeed a mapped request, so map our prefix with the appropriate protocol
+	  unsigned int start = (len>0) ? len+2 : 1; // Add 2 to remove both leading and trailing slashes
+	  // Strip out any query string if we are in prefix mode
+	  size_t q = request_uri.find_first_of('?');
+	  unsigned int end = (q==string::npos) ? request_uri.length() : q;
+	  request_string = command + "=" + request_uri.substr( start, end-start );
+	  if( loglevel >= 2 ) logfile << "Request URI mapped to " << request_string << endl;
+	}
+      }
+
+
+      // If the request string hasn't been set through a URI map, get it from the QUERY_STRING variable
+      if( request_string.empty() ){
+	// Get the query into a string
 #ifdef DEBUG
-      header = argv[1];
+	header = argv[1];
 #else
-      header = FCGX_GetParam( "QUERY_STRING", request.envp );
+	header = FCGX_GetParam( "QUERY_STRING", request.envp );
 #endif
 
-      const string request_string = (header!=NULL)? header : "";
+	request_string = (header!=NULL)? header : "";
+      }
+
+
 
       // Check that we actually have a request string
       if( request_string.empty() ){
@@ -519,10 +593,10 @@ int main( int argc, char *argv[] )
       if( (header = FCGX_GetParam("REQUEST_URI", request.envp)) ){
         session.headers["REQUEST_URI"] = string(header);
       }
-      if ( (header = FCGX_GetParam("HTTPS", request.envp)) ) {
+      if( (header = FCGX_GetParam("HTTPS", request.envp)) ) {
         session.headers["HTTPS"] = string(header);
       }
-      if ( (header = FCGX_GetParam("HTTP_X_IIIF_ID", request.envp)) ) {
+      if( (header = FCGX_GetParam("HTTP_X_IIIF_ID", request.envp)) ){
         session.headers["HTTP_X_IIIF_ID"] = string(header);
       }
 
