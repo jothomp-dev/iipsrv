@@ -27,7 +27,6 @@
 
 
 #include "KakaduImage.h"
-#include "Environment.h"
 #include <kdu_compressed.h>
 #include <cmath>
 #include <sstream>
@@ -59,11 +58,16 @@ unsigned int get_nprocs_conf(){
 using namespace std;
 
 
+void KakaduImage::setReadmode(int readmode)
+{
+  kdu_readmode = static_cast<KakaduReadmode>(readmode);
+};
+
+
 void KakaduImage::openImage() throw (file_error)
 {
   string filename = getFileName( currentX, currentY );
-  std::string kdu_readmode = Environment::getKduReadMode();
-  bool seeking_enabled = kdu_readmode != "resilient";
+  bool seeking_enabled = kdu_readmode != KDU_RESILIENT;
 
   // Update our timestamp
   updateTimestamp( filename );
@@ -108,9 +112,9 @@ void KakaduImage::openImage() throw (file_error)
 
   // Set up the cache size and allow restarting
   //codestream.augment_cache_threshold(1024);
-  if ( kdu_readmode == "fussy" ) {
+  if ( kdu_readmode == KDU_FUSSY ) {
       codestream.set_fussy();
-  } else if ( kdu_readmode == "resilient" ) {
+  } else if ( kdu_readmode == KDU_RESILIENT ) {
       codestream.set_resilient();
   } else {
       codestream.set_fast();

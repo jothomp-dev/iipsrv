@@ -112,7 +112,7 @@ void FIF::run( Session* session, const string& src ){
       }
     }
 
-
+    std::vector<PropertySetter> setters;
 
     /***************************************************************
       Test for different image types - only TIFF is native for now
@@ -124,18 +124,28 @@ void FIF::run( Session* session, const string& src ){
       if( session->loglevel >= 2 ) *(session->logfile) << "FIF :: TIFF image detected" << endl;
       *session->image = new TPTImage( test );
     }
+
 #if defined(HAVE_KAKADU) || defined(HAVE_OPENJPEG)
     else if( format == JPEG2000 ){
       if( session->loglevel >= 2 )
         *(session->logfile) << "FIF :: JPEG2000 image detected" << endl;
 #if defined(HAVE_KAKADU)
         *session->image = new KakaduImage( test );
+        PropertySetter setter = {
+          [](IIPImage *image, int& readmode) {
+            image->setReadmode(readmode);
+          }, // setter.function
+          session->kdu_readmode // setter.arg
+        };
+        setters.push_back(setter);
 #elif defined(HAVE_OPENJPEG)
         *session->image = new OpenJPEGImage( test );
 #endif
     }
 #endif
     else throw string( "Unsupported image type: " + argument );
+
+    session->setters = setters;
 
     /* Disable module loading for now!
     else{
@@ -171,6 +181,9 @@ void FIF::run( Session* session, const string& src ){
     }
     */
 
+    for (PropertySetter setter: session->setters) {
+      setter.function(*session->image, setter.arg);
+    }
 
     // Open image and update timestamp
     (*session->image)->openImage();

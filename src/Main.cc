@@ -283,7 +283,7 @@ int main( int argc, char *argv[] )
   // Get the allow upscaling setting
   bool allow_upscaling = Environment::getAllowUpscaling();
 
-  string kdu_readmode = Environment::getKduReadMode();
+  int kdu_readmode = Environment::getKduReadMode();
 
 
   // Print out some information
@@ -525,6 +525,7 @@ int main( int argc, char *argv[] )
       session.out = &writer;
       session.watermark = &watermark;
       session.headers.clear();
+      session.kdu_readmode = kdu_readmode;
 
       char* header = NULL;
       string request_string;

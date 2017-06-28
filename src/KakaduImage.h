@@ -66,6 +66,8 @@ class kdu_stream_message : public kdu_message {
   }
 };
 
+enum KakaduReadmode { KDU_FAST, KDU_FUSSY, KDU_RESILIENT };
+
 
 //static kdu_stream_message cout_message(&std::cout);
 //static kdu_stream_message cerr_message(&std::cerr);
@@ -75,8 +77,6 @@ static kdu_stream_message cerr_message(&logfile);
 
 static kdu_message_formatter pretty_cout(&cout_message);
 static kdu_message_formatter pretty_cerr(&cerr_message);
-
-
 
 
 
@@ -105,6 +105,9 @@ class KakaduImage : public IIPImage {
 
   /// Tile or Strip region
   kdu_dims comp_dims;
+
+  /// fast, fussy, or resilient:
+  KakaduReadmode kdu_readmode = KDU_FAST;
 
   /// Main processing function
   /** @param r resolution
@@ -163,6 +166,10 @@ class KakaduImage : public IIPImage {
 
   /// Destructor
   ~KakaduImage() { closeImage(); };
+
+
+  void setReadmode(int readmode);
+
 
   /// Overloaded function for opening a TIFF image
   void openImage() throw (file_error);

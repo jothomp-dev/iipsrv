@@ -327,6 +327,8 @@ class IIPImage {
   /// Return codec description: Overloaded by child class.
   virtual const std::string getDescription() { return std::string( "IIPImage Base Class" ); };
 
+  virtual void setReadmode(int readmode) {;};
+
   /// Open the image: Overloaded by child class.
   virtual void openImage() { throw file_error( "IIPImage openImage called" ); };
 

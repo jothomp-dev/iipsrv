@@ -42,8 +42,8 @@
 #define BASE_URL "";
 #define CACHE_CONTROL "max-age=86400"; // 24 hours
 #define ALLOW_UPSCALING true
-#define KAKADU_READMODE "fast"
 #define URI_MAP ""
+#define KAKADU_READMODE 0
 
 
 #include <string>
@@ -67,15 +67,17 @@ class Environment {
   }
 
 
-  static std::string getKduReadMode(){
+  static int getKduReadMode(){
+    int readmode;
     char* envpara = getenv( "KAKADU_READMODE" );
     if ( envpara ) {
-      std::string mode(envpara);
-      if ( mode == "fussy" || mode == "resilient" ) {
-        return mode;
-      }
+      readmode = atoi(envpara);
+      if (readmode > 2) readmode = 2;
+      if (readmode < 0) readmode = 0;
+    } else {
+      readmode = KAKADU_READMODE;
     }
-    return std::string( KAKADU_READMODE );
+    return readmode;
   }
 
 
