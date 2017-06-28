@@ -20,6 +20,8 @@
 
 
 #include <algorithm>
+#include <functional>
+#include <vector>
 #include "Task.h"
 #include "URL.h"
 #include "Environment.h"
@@ -112,6 +114,7 @@ void FIF::run( Session* session, const string& src ){
       }
     }
 
+    typedef std::function<void(IIPImage*)> PropertySetter;
     std::vector<PropertySetter> setters;
 
     /***************************************************************
@@ -131,21 +134,16 @@ void FIF::run( Session* session, const string& src ){
         *(session->logfile) << "FIF :: JPEG2000 image detected" << endl;
 #if defined(HAVE_KAKADU)
         *session->image = new KakaduImage( test );
-        PropertySetter setter = {
-          [](IIPImage *image, int& readmode) {
-            image->setReadmode(readmode);
-          }, // setter.function
-          session->readmode // setter.arg
+        PropertySetter setReadmode = [session](IIPImage *image) {
+            image->setReadmode(session->readmode);
         };
-        setters.push_back(setter);
+        setters.push_back(setReadmode);
 #elif defined(HAVE_OPENJPEG)
         *session->image = new OpenJPEGImage( test );
 #endif
     }
 #endif
     else throw string( "Unsupported image type: " + argument );
-
-    session->setters = setters;
 
     /* Disable module loading for now!
     else{
@@ -181,8 +179,8 @@ void FIF::run( Session* session, const string& src ){
     }
     */
 
-    for (PropertySetter setter: session->setters) {
-      setter.function(*session->image, setter.arg);
+    for (PropertySetter setProperty: setters) {
+      setProperty(*session->image);
     }
 
     // Open image and update timestamp

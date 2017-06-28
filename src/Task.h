@@ -26,8 +26,6 @@
 
 #include <string>
 #include <fstream>
-#include <functional>
-#include <vector>
 #include "IIPImage.h"
 #include "IIPResponse.h"
 #include "JPEGCompressor.h"
@@ -59,12 +57,6 @@ typedef HASHMAP <std::string,IIPImage> imageCacheMapType;
 #endif
 
 
-struct PropertySetter {
-    std::function<void(IIPImage*, int&)> function;
-    int arg;
-};
-
-
 /// Structure to hold our session data
 struct Session {
   IIPImage **image;
@@ -78,9 +70,7 @@ struct Session {
   int loglevel;
   std::ofstream* logfile;
   std::map <const std::string, std::string> headers;
-  std::vector<PropertySetter> setters;
   int readmode;
-
   imageCacheMapType *imageCache;
   Cache* tileCache;
 
