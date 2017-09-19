@@ -56,6 +56,9 @@
 #include "DSOImage.h"
 #endif
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 // If necessary, define missing setenv and unsetenv functions
 #ifndef HAVE_SETENV
@@ -286,6 +289,10 @@ int main( int argc, char *argv[] )
   int kdu_readmode = Environment::getKduReadMode();
 
 
+  // Get the ICC embedding setting
+  bool embed_icc = Environment::getEmbedICC();
+
+
   // Print out some information
   if( loglevel >= 1 ){
     logfile << "Setting maximum image cache size to " << max_image_cache_size << "MB" << endl;
@@ -302,12 +309,21 @@ int main( int argc, char *argv[] )
       if( max_layers < 0 ) logfile << "all layers" << endl;
       else logfile << max_layers << endl;
     }
+    logfile << "Setting Allow Upscaling to " << (allow_upscaling? "true" : "false") << endl;
+    logfile << "Setting ICC profile embedding to " << (embed_icc? "true" : "false") << endl;
 #ifdef HAVE_KAKADU
     logfile << "Setting up JPEG2000 support via Kakadu SDK" << endl;
 #elif defined(HAVE_OPENJPEG)
     logfile << "Setting up JPEG2000 support via OpenJPEG" << endl;
 #endif
-    logfile << "Setting Allow Upscaling to " << (allow_upscaling? "true" : "false") << endl;
+#ifdef _OPENMP
+    int num_threads = 0;
+#pragma omp parallel
+    {
+      num_threads = omp_get_num_threads();
+    }
+    if( num_threads > 1 ) logfile << "OpenMP enabled for parallelized image processing with " << num_threads << " threads" << endl;
+#endif
   }
 
 
@@ -501,6 +517,7 @@ int main( int argc, char *argv[] )
     if( max_CVT != -1 ) view.setMaxSize( max_CVT );
     if( max_layers != 0 ) view.setMaxLayers( max_layers );
     view.setAllowUpscaling( allow_upscaling );
+    view.setEmbedICC( embed_icc );
 
 
 
@@ -530,7 +547,7 @@ int main( int argc, char *argv[] )
       char* header = NULL;
       string request_string;
 
-
+#ifndef DEBUG
       // If we have a URI prefix mapping, first test for a match between the map prefix string
       //  and the full REQUEST_URI variable
       if( !uri_map.empty() ){
@@ -554,7 +571,7 @@ int main( int argc, char *argv[] )
 	  if( loglevel >= 2 ) logfile << "Request URI mapped to " << request_string << endl;
 	}
       }
-
+#endif
 
       // If the request string hasn't been set through a URI map, get it from the QUERY_STRING variable
       if( request_string.empty() ){
@@ -584,6 +601,7 @@ int main( int argc, char *argv[] )
       session.headers["QUERY_STRING"] = request_string;
       session.headers["BASE_URL"] = base_url;
 
+#ifndef DEBUG
       // Get several other HTTP headers
       if( (header = FCGX_GetParam("SERVER_PROTOCOL", request.envp)) ){
         session.headers["SERVER_PROTOCOL"] = string(header);
@@ -608,7 +626,7 @@ int main( int argc, char *argv[] )
 	  logfile << "HTTP Header: If-Modified-Since: " << header << endl;
 	}
       }
-
+#endif
 
 #ifdef HAVE_MEMCACHED
       // Check whether this exists in memcached, but only if we haven't had an if_modified_since
@@ -776,14 +794,16 @@ int main( int argc, char *argv[] )
       else{
 	/* Display our advertising banner ;-)
 	 */
-	writer.printf( response.getAdvert( version ).c_str() );
+	writer.printf( response.getAdvert().c_str() );
       }
 
     }
 
     // Image file errors
     catch( const file_error& error ){
-      string status = "Status: 404 Not Found\r\nServer: iipsrv/" + version + "\r\n\r\n" + error.what();
+      string status = "Status: 404 Not Found\r\nServer: iipsrv/" + version +
+	(response.getCORS().length() ? "\r\n" + response.getCORS() : "") +
+	 "\r\n\r\n" + error.what();
       writer.printf( status.c_str() );
       writer.flush();
       if( loglevel >= 2 ){
@@ -794,7 +814,9 @@ int main( int argc, char *argv[] )
 
     // Parameter errors
     catch( const invalid_argument& error ){
-      string status = "Status: 400 Bad Request\r\nServer: iipsrv/" + version + "\r\n\r\n" + error.what();
+      string status = "Status: 400 Bad Request\r\nServer: iipsrv/" + version +
+	(response.getCORS().length() ? "\r\n" + response.getCORS() : "") +
+	"\r\n\r\n" + error.what();
       writer.printf( status.c_str() );
       writer.flush();
       if( loglevel >= 2 ){
@@ -813,7 +835,7 @@ int main( int argc, char *argv[] )
 
       /* Display our advertising banner ;-)
        */
-      writer.printf( response.getAdvert( version ).c_str() );
+      writer.printf( response.getAdvert().c_str() );
 
     }
 
