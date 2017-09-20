@@ -71,10 +71,10 @@ class Environment {
   static int getKduReadMode(){
     int readmode;
     char* envpara = getenv( "KAKADU_READMODE" );
-    if ( envpara ) {
-      readmode = atoi(envpara);
-      if (readmode > 2) readmode = 2;
-      if (readmode < 0) readmode = 0;
+    if( envpara ){
+      readmode = atoi( envpara );
+      if( readmode > 2 ) readmode = 2;
+      if( readmode < 0 ) readmode = 0;
     } else {
       readmode = KAKADU_READMODE;
     }

@@ -298,7 +298,6 @@ int main( int argc, char *argv[] )
     logfile << "Setting maximum image cache size to " << max_image_cache_size << "MB" << endl;
     logfile << "Setting filesystem prefix to '" << filesystem_prefix << "'" << endl;
     logfile << "Setting default JPEG quality to " << jpeg_quality << endl;
-    logfile << "Setting Kakadu readmode to " << kdu_readmode << endl;
     logfile << "Setting maximum CVT size to " << max_CVT << endl;
     logfile << "Setting HTTP Cache-Control header to '" << cache_control << "'" << endl;
     logfile << "Setting 3D file sequence name pattern to '" << filename_pattern << "'" << endl;
@@ -313,6 +312,7 @@ int main( int argc, char *argv[] )
     logfile << "Setting ICC profile embedding to " << (embed_icc? "true" : "false") << endl;
 #ifdef HAVE_KAKADU
     logfile << "Setting up JPEG2000 support via Kakadu SDK" << endl;
+    logfile << "Setting Kakadu readmode to " << kdu_readmode << endl;
 #elif defined(HAVE_OPENJPEG)
     logfile << "Setting up JPEG2000 support via OpenJPEG" << endl;
 #endif
@@ -542,7 +542,7 @@ int main( int argc, char *argv[] )
       session.out = &writer;
       session.watermark = &watermark;
       session.headers.clear();
-      session.readmode = kdu_readmode;
+      session.readmodes["Kakadu"] = kdu_readmode;
 
       char* header = NULL;
       string request_string;

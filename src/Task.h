@@ -70,7 +70,7 @@ struct Session {
   int loglevel;
   std::ofstream* logfile;
   std::map <const std::string, std::string> headers;
-  int readmode;
+  std::map <const std::string, int> readmodes;
   imageCacheMapType *imageCache;
   Cache* tileCache;
 

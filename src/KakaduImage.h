@@ -66,7 +66,37 @@ class kdu_stream_message : public kdu_message {
   }
 };
 
-enum KakaduReadmode { KDU_FAST, KDU_FUSSY, KDU_RESILIENT };
+class KakaduReadmode {
+ private:
+  enum KDU_READMODE { KDU_FAST, KDU_FUSSY, KDU_RESILIENT };
+  KDU_READMODE my_readmode;
+
+ public:
+  KakaduReadmode() {
+    my_readmode = KDU_FAST;
+  }
+  KakaduReadmode(int readmode) {
+    if( readmode > 2 ) readmode = 2;
+    if( readmode < 0 ) readmode = 0;
+    my_readmode = static_cast<KDU_READMODE>(readmode);
+  }
+  void configure(kdu_codestream& codestream) {
+    switch( my_readmode ) {
+      case KDU_FUSSY:
+        codestream.set_fussy();
+        break;
+      case KDU_RESILIENT:
+        codestream.set_resilient();
+        break;
+      case KDU_FAST:
+      default:
+        codestream.set_fast();
+    }
+  }
+  bool get_seeking_enabled() {
+    return my_readmode != KDU_RESILIENT;
+  }
+};
 
 
 //static kdu_stream_message cout_message(&std::cout);
@@ -107,7 +137,7 @@ class KakaduImage : public IIPImage {
   kdu_dims comp_dims;
 
   /// fast, fussy, or resilient:
-  KakaduReadmode kdu_readmode = KDU_FAST;
+  KakaduReadmode kdu_readmode;
 
   /// Main processing function
   /** @param r resolution

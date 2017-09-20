@@ -130,7 +130,7 @@ void FIF::run( Session* session, const string& src ){
         *(session->logfile) << "FIF :: JPEG2000 image detected" << endl;
 #if defined(HAVE_KAKADU)
         *session->image = new KakaduImage( test );
-        (*session->image)->setReadmode(session->readmode);
+        (*session->image)->setReadmode(session->readmodes["Kakadu"]);
 #elif defined(HAVE_OPENJPEG)
         *session->image = new OpenJPEGImage( test );
 #endif

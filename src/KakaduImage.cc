@@ -60,14 +60,13 @@ using namespace std;
 
 void KakaduImage::setReadmode(int readmode)
 {
-  kdu_readmode = static_cast<KakaduReadmode>(readmode);
+  kdu_readmode = KakaduReadmode(readmode);
 };
 
 
 void KakaduImage::openImage() throw (file_error)
 {
   string filename = getFileName( currentX, currentY );
-  bool seeking_enabled = kdu_readmode != KDU_RESILIENT;
 
   // Update our timestamp
   updateTimestamp( filename );
@@ -84,7 +83,7 @@ void KakaduImage::openImage() throw (file_error)
 
   // Open the JPX or JP2 file
   try{
-    src.open( filename.c_str(), seeking_enabled );
+    src.open( filename.c_str(), kdu_readmode.get_seeking_enabled() );
     if( jpx_input.open( &src, false ) != 1 ) throw 1;
   }
   catch (...){
@@ -112,13 +111,7 @@ void KakaduImage::openImage() throw (file_error)
 
   // Set up the cache size and allow restarting
   //codestream.augment_cache_threshold(1024);
-  if ( kdu_readmode == KDU_FUSSY ) {
-      codestream.set_fussy();
-  } else if ( kdu_readmode == KDU_RESILIENT ) {
-      codestream.set_resilient();
-  } else {
-      codestream.set_fast();
-  }
+  kdu_readmode.configure(codestream);
   codestream.set_persistent();
   //  codestream.enable_restart();
 
