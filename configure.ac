@@ -201,7 +201,7 @@ if test -n "$kakadu_path"; then
 		INCLUDES="$INCLUDES -I$kakadu_path/managed/all_includes/"
 		EXTRAS="KakaduImage.o"
 		kakadu_lib_name=`basename $kakadu_path/apps/make/*.so | sed 's/^lib//' | sed 's/.so$//'`
-		LIBS="$LIBS $kakadu_path/apps/make/jpx.o $kakadu_path/apps/make/jp2.o $kakadu_path/apps/make/kdu_stripe_decompressor.o -L$kakadu_path/apps/make -l$kakadu_lib_name -lpthread"
+		LIBS="$LIBS $kakadu_path/apps/make/jpx.o $kakadu_path/apps/make/jp2.o $kakadu_path/apps/make/supp_local.o $kakadu_path/apps/make/kdu_stripe_decompressor.o -L$kakadu_path/apps/make -l$kakadu_lib_name -lpthread"
 
 		# Check for SSSE3 support in Kakadu
 		AC_CHECK_FILE( $kakadu_path/apps/make/ssse3_stripe_transfer.o,
